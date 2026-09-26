@@ -1,76 +1,81 @@
 import { Link } from "react-router-dom";
-import { ExternalLink, Mail, MapPin, Phone, ShieldAlert, Sparkles } from "lucide-react";
-import logo from "../assets/logo.png.png"; // <-- Importe l'image directement ici
+import { Mail, MapPin, Phone, Shield } from "lucide-react";
+import logo from "../assets/logo.png.png";
+
+const NAV = [
+  { to: "/services", label: "Services administratifs" },
+  { to: "/a-propos", label: "À propos" },
+  { to: "/faq", label: "FAQ" },
+  { to: "/contact", label: "Contact & Support" },
+  { to: "/connexion", label: "Espace Agent / Admin" },
+];
+
+const CONTACTS = [
+  { Icon: MapPin, text: "Dakar, Sénégal" },
+  { Icon: Mail, text: "support@sunudemarche.sn" },
+  { Icon: Phone, text: "+221 78 523 42 03" },
+];
 
 export default function PublicFooter() {
   return (
-    <footer className="bg-slate-900 text-white mt-24 border-t border-slate-800">
-      <div className="max-w-6xl mx-auto px-4 py-14 grid gap-10 md:grid-cols-3">
-        {/* Colonne 1 : Logo & Description */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <img 
-              src={logo} 
-              alt="SunuDémarche Logo" 
-              className="h-16 w-auto object-contain brightness-0 invert opacity-90" 
-            />
-          </div>
-          <p className="text-sm text-slate-400 leading-relaxed">
-            Simplifiez vos démarches administratives au Sénégal. Accédez aux services de vos centres en toute simplicité.
+    <footer className="bg-slate-900 text-slate-300 mt-20">
+      <div className="max-w-6xl mx-auto px-4 pt-14 pb-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+
+        {/* Branding */}
+        <div className="lg:col-span-2 space-y-4">
+          <img
+            src={logo}
+            alt="SunuDémarche"
+            className="h-14 w-auto object-contain brightness-0 invert opacity-90"
+          />
+          <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
+            Plateforme officielle pour la gestion en ligne des démarches administratives au Sénégal. Sécurisée, simple et accessible 24h/24.
           </p>
-          <div className="inline-flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-3 py-1 rounded-full font-medium border border-primary/20">
-            <Sparkles size={12} /> République du Sénégal
+          <div className="inline-flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
+            <Shield size={12} />
+            République du Sénégal
           </div>
         </div>
 
-        {/* Colonne 2 : Liens utiles */}
+        {/* Navigation */}
         <div className="space-y-4">
-          <div className="font-semibold text-xs uppercase tracking-wider text-slate-300">
-            Navigation rapide
-          </div>
-          <ul className="space-y-2.5 text-sm text-slate-400">
-            <li>
-              <Link to="/services" className="hover:text-white transition-colors flex items-center gap-1.5">
-                <span>Services administratifs</span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/faq" className="hover:text-white transition-colors flex items-center gap-1.5">
-                <span>Foire aux questions (FAQ)</span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/contact" className="hover:text-white transition-colors flex items-center gap-1.5">
-                <span>Contact & Support</span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/login" className="hover:text-white transition-colors flex items-center gap-1.5">
-                <span>Espace Agent / Administration</span>
-              </Link>
-            </li>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Navigation</h3>
+          <ul className="space-y-2.5">
+            {NAV.map(({ to, label }) => (
+              <li key={to}>
+                <Link
+                  to={to}
+                  className="text-sm text-slate-400 hover:text-white transition-colors"
+                >
+                  {label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
-        {/* Colonne 3 : Avertissement légal */}
+        {/* Contact */}
         <div className="space-y-4">
-          <div className="font-semibold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <ShieldAlert size={14} className="text-amber-400" /> Avertissement légal
-          </div>
-          <p className="text-xs text-slate-400 leading-relaxed bg-slate-800/50 p-4 rounded-xl border border-slate-800">
-            SunuDémarche est une plateforme technologique facilitant la mise en relation et le suivi des dossiers auprès des organismes compétents. Elle ne se substitue pas aux institutions officielles.
-          </p>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Contact</h3>
+          <ul className="space-y-3">
+            {CONTACTS.map(({ Icon, text }) => (
+              <li key={text} className="flex items-start gap-2.5 text-sm text-slate-400">
+                <Icon size={14} className="shrink-0 mt-0.5 text-slate-500" />
+                <span>{text}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      {/* Barre de bas de page */}
-      <div className="border-t border-slate-800/80 py-6 px-4 text-center text-xs text-slate-500">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* Barre basse */}
+      <div className="border-t border-slate-800 py-5 px-4">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <p>© {new Date().getFullYear()} SunuDémarche — Tous droits réservés.</p>
-          <div className="flex items-center gap-4 text-slate-400">
-            <span className="hover:text-slate-300 transition-colors cursor-pointer">Conditions d'utilisation</span>
-            <span>•</span>
-            <span className="hover:text-slate-300 transition-colors cursor-pointer">Politique de confidentialité</span>
+          <div className="flex items-center gap-4">
+            <span className="hover:text-slate-300 cursor-pointer transition-colors">Conditions d'utilisation</span>
+            <span>·</span>
+            <span className="hover:text-slate-300 cursor-pointer transition-colors">Confidentialité</span>
           </div>
         </div>
       </div>

@@ -1,144 +1,136 @@
 import { Link } from "react-router-dom";
+import {
+  UserPlus, FileSearch, Send, CheckCircle2,
+  ShieldCheck, Clock, MapPin, ArrowRight,
+  Star, FileText, ChevronRight,
+} from "lucide-react";
 import { Button } from "../../components/ui";
-import { UserPlus, FileSearch, Send, CheckCircle2, ShieldCheck, Clock, MapPin, ArrowRight } from "lucide-react";
 
 const STEPS = [
+  { n: "01", icon: UserPlus,    title: "Créez votre compte",     desc: "Inscription rapide avec votre adresse email." },
+  { n: "02", icon: FileSearch,  title: "Choisissez le service",   desc: "Sélectionnez votre démarche et votre centre." },
+  { n: "03", icon: Send,        title: "Remplissez le formulaire", desc: "Quelques informations suffisent pour constituer votre dossier." },
+  { n: "04", icon: CheckCircle2, title: "Récupérez votre acte",   desc: "Notifié dès que votre document est prêt à retirer." },
+];
+
+const TRUST = [
   {
-    number: "01",
-    title: "Créez votre compte",
-    desc: "Inscrivez-vous simplement avec votre adresse email.",
-    icon: UserPlus,
+    icon: ShieldCheck,
+    title: "100 % sécurisé",
+    desc: "Chiffrement TLS, données personnelles protégées conformément à la loi.",
+    color: "text-blue-600 bg-blue-50 border-blue-100",
   },
   {
-    number: "02",
-    title: "Choisissez votre service",
-    desc: "Sélectionnez l'extrait de naissance et votre centre.",
-    icon: FileSearch,
+    icon: Clock,
+    title: "Suivi en temps réel",
+    desc: "Consultez l'avancement de vos dossiers 24h/24, 7j/7.",
+    color: "text-emerald-600 bg-emerald-50 border-emerald-100",
   },
   {
-    number: "03",
-    title: "Faites votre demande",
-    desc: "Remplissez le formulaire et suivez votre dossier avec un code unique.",
-    icon: Send,
-  },
-  {
-    number: "04",
-    title: "Récupérez votre acte",
-    desc: "Recevez une alerte dès que votre document est prêt.",
-    icon: CheckCircle2,
+    icon: MapPin,
+    title: "Zéro déplacement inutile",
+    desc: "Évitez les files d'attente. Vous vous déplacez seulement pour récupérer.",
+    color: "text-amber-600 bg-amber-50 border-amber-100",
   },
 ];
 
 export default function Home() {
   return (
-    <div className="bg-background min-h-screen text-text">
-      
-      {/* 1. HERO SECTION & VALEURS DE CONFIANCE */}
-      <section className="max-w-5xl mx-auto px-4 pt-12 pb-16 text-center">
-        
-        {/* Badge Officiel Simple (Agrandis et sans point vert) */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-primary text-sm font-semibold mb-6 shadow-sm border border-blue-100">
-          Plateforme officielle des démarches au Sénégal
+    <div className="bg-background text-text">
+
+      {/* ── HERO ──────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-white border-b border-slate-100">
+        {/* Fond décoratif subtil */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 w-[400px] h-[400px] rounded-full bg-secondary/5 blur-3xl" />
         </div>
 
-        {/* Titre principal */}
-        <h1 className="text-2xl md:text-4xl font-bold text-text tracking-tight mb-4 leading-snug">
-          Simplifiez vos <span className="text-primary">démarches administratives</span> au Sénégal.
-        </h1>
-
-        {/* Sous-titre */}
-        <p className="text-text-secondary text-base md:text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-          Faites vos demandes en ligne facilement, sans stress et sans vous déplacer inutilement.
-        </p>
-
-        {/* Boutons d'action principaux */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
-          <Link to="/inscription" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto text-sm px-6 py-2.5 shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-2">
-              Commencer ma démarche
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
-
-          <Link to="/services" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto text-sm px-6 py-2.5 hover:bg-slate-50 transition-colors">
-              Voir les services
-            </Button>
-          </Link>
-        </div>
-
-        {/* Indicateurs de confiance ultra-visibles */}
-        <div className="pt-8 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-4xl mx-auto text-left sm:text-center">
-          
-          <div className="flex items-center sm:flex-col gap-4 p-5 rounded-2xl bg-white border border-blue-100 shadow-sm hover:shadow-md transition-all">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-primary flex items-center justify-center shrink-0 sm:mx-auto">
-              <ShieldCheck className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-base font-bold text-text">100% Sécurisé</p>
-              <p className="text-xs text-text-secondary mt-0.5">Données personnelles et administratives protégées.</p>
-            </div>
+        <div className="relative max-w-5xl mx-auto px-4 pt-16 pb-20 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/8 text-primary text-xs font-semibold mb-6 border border-primary/15">
+            <Star size={12} className="fill-primary" />
+            Plateforme officielle des démarches au Sénégal
           </div>
 
-          <div className="flex items-center sm:flex-col gap-4 p-5 rounded-2xl bg-white border border-emerald-100 shadow-sm hover:shadow-md transition-all">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-secondary flex items-center justify-center shrink-0 sm:mx-auto">
-              <Clock className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-base font-bold text-text">Suivi 24/7</p>
-              <p className="text-xs text-text-secondary mt-0.5">Consultez l'avancement de vos dossiers en temps réel.</p>
-            </div>
-          </div>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight mb-5">
+            Vos démarches administratives,<br className="hidden sm:block" />
+            <span className="text-primary"> en ligne et sans stress.</span>
+          </h1>
 
-          <div className="flex items-center sm:flex-col gap-4 p-5 rounded-2xl bg-white border border-amber-100 shadow-sm hover:shadow-md transition-all">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0 sm:mx-auto">
-              <MapPin className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-base font-bold text-text">Zéro Déplacement</p>
-              <p className="text-xs text-text-secondary mt-0.5">Évitez les files d'attente interminables aux guichets.</p>
-            </div>
-          </div>
+          <p className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
+            Demandez vos actes officiels depuis chez vous, suivez leur avancement en temps réel et ne vous déplacez qu'une seule fois — pour récupérer votre document.
+          </p>
 
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link to="/inscription">
+              <Button size="lg" className="w-full sm:w-auto shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30">
+                Commencer ma démarche
+                <ArrowRight size={17} />
+              </Button>
+            </Link>
+            <Link to="/services">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                Voir les services
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* 2. SECTION COMMENT ÇA MARCHE */}
-      <section className="bg-surface border-y border-slate-200/80 py-16">
+      {/* ── CONFIANCE ─────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 py-14">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {TRUST.map(({ icon: Icon, title, desc, color }) => (
+            <div
+              key={title}
+              className="flex items-start gap-4 p-5 rounded-2xl bg-white border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-200"
+            >
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${color}`}>
+                <Icon size={22} />
+              </div>
+              <div>
+                <p className="font-bold text-slate-900 text-sm">{title}</p>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── COMMENT ÇA MARCHE ─────────────────────────────────────────── */}
+      <section className="bg-white border-y border-slate-100 py-16">
         <div className="max-w-5xl mx-auto px-4">
-          
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-text mb-2">
-              Comment ça se passe ?
-            </h2>
-            <p className="text-text-secondary text-sm max-w-sm mx-auto">
-              Quatre étapes simples pour obtenir vos documents officiels.
+            <span className="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold mb-3">
+              Simple & rapide
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Comment ça se passe ?</h2>
+            <p className="text-slate-500 text-sm mt-2 max-w-md mx-auto">
+              Quatre étapes simples pour obtenir vos documents officiels sans vous déplacer.
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {STEPS.map((step) => {
-              const IconComponent = step.icon;
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+            {STEPS.map((step, i) => {
+              const Icon = step.icon;
               return (
-                <div 
-                  key={step.title} 
-                  className="bg-background p-5 rounded-xl border border-slate-100 shadow-sm relative flex flex-col items-center text-center group hover:border-primary/30 transition-all"
+                <div
+                  key={step.n}
+                  className="relative bg-background p-6 rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover hover:border-primary/20 transition-all duration-200 group"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-primary flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-
-                  <span className="absolute top-3 right-3 text-[11px] font-bold text-slate-300">
-                    {step.number}
+                  <span className="absolute top-4 right-4 text-[11px] font-bold text-slate-200 select-none">
+                    {step.n}
                   </span>
-
-                  <h3 className="font-semibold text-text text-base mb-1">
-                    {step.title}
-                  </h3>
-
-                  <p className="text-xs text-text-secondary leading-relaxed">
-                    {step.desc}
-                  </p>
+                  <div className="w-11 h-11 rounded-xl bg-primary/8 text-primary flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors duration-200">
+                    <Icon size={20} />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm mb-1.5">{step.title}</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">{step.desc}</p>
+                  {i < STEPS.length - 1 && (
+                    <div className="hidden lg:flex absolute top-1/2 -right-3 z-10">
+                      <ChevronRight size={16} className="text-slate-300" />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -146,29 +138,35 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. SECTION SERVICE EN VEDETTE (Simple, épurée et humaine) */}
-      <section className="max-w-4xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center">
-          
-          {/* Petit badge discret */}
-          <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-primary text-xs font-semibold mb-3">
-            Premier service disponible
-          </span>
+      {/* ── SERVICE EN VEDETTE ────────────────────────────────────────── */}
+      <section className="max-w-4xl mx-auto px-4 py-16">
+        <div className="relative overflow-hidden bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-8 sm:p-12 text-white shadow-xl shadow-primary/20">
+          {/* Déco */}
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full bg-white/5 translate-y-1/2 -translate-x-1/2" />
 
-          <h2 className="text-xl md:text-2xl font-bold text-text mb-2">
-            Besoin d'un Extrait de Naissance ?
-          </h2>
-
-          <p className="text-text-secondary text-sm max-w-md mx-auto mb-6 leading-relaxed">
-            Faites votre demande en ligne dès maintenant et suivez l'avancement de votre dossier en toute sérénité.
-          </p>
-
-          <Link to="/inscription">
-            <Button className="bg-primary hover:bg-primary-dark text-white font-medium px-6 py-2.5 text-sm shadow-sm transition-all">
-              Faire ma demande d'extrait
-            </Button>
-          </Link>
-
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <FileText size={20} />
+                </div>
+                <span className="text-xs font-semibold text-white/70 uppercase tracking-wider">Service disponible</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold leading-tight mb-3">
+                Extrait de Naissance
+              </h2>
+              <p className="text-white/75 text-sm leading-relaxed max-w-md">
+                Faites votre demande en ligne et suivez l'avancement de votre dossier en toute sérénité. Simple, rapide et sécurisé.
+              </p>
+            </div>
+            <Link to="/inscription" className="shrink-0">
+              <button className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-primary font-bold text-sm hover:bg-slate-50 transition-colors shadow-lg">
+                Faire ma demande
+                <ArrowRight size={16} />
+              </button>
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -1,9 +1,14 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "https://sunudemarche-api.onrender.com/api";
+// En dev  : VITE_API_URL=http://localhost:8000/api  (lu depuis .env)
+// En prod : VITE_API_URL=https://sunudemarche-api.onrender.com/api  (lu depuis .env.production)
+// Fallback hardcodé au cas où la variable n'est pas injectée par Vite
+const BASE_URL =
+  import.meta.env.VITE_API_URL || "https://sunudemarche-api.onrender.com/api";
 
 const client = axios.create({ baseURL: BASE_URL });
 
+// ── Intercepteur requête : injecte le token Bearer ────────────────────────
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   if (token) {
@@ -12,6 +17,7 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
+// ── Intercepteur réponse : refresh token automatique ─────────────────────
 let isRefreshing = false;
 let queue = [];
 
@@ -25,45 +31,50 @@ client.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      const refreshToken = localStorage.getItem("refresh_token");
-      if (!refreshToken) {
-        localStorage.removeItem("access_token");
-        return Promise.reject(error);
-      }
-
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          queue.push({ resolve, reject });
-        }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return client(originalRequest);
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        const { data } = await axios.post(`${BASE_URL}/auth/token/refresh/`, {
-          refresh: refreshToken,
-        });
-        localStorage.setItem("access_token", data.access);
-        processQueue(null, data.access);
-        originalRequest.headers.Authorization = `Bearer ${data.access}`;
-        return client(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        window.location.href = "/connexion";
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) {
+      localStorage.removeItem("access_token");
+      return Promise.reject(error);
+    }
+
+    // Si un refresh est déjà en cours, mettre la requête en file d'attente
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        queue.push({ resolve, reject });
+      }).then((token) => {
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return client(originalRequest);
+      });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+      // Utilise BASE_URL pour que le refresh pointe toujours sur le bon serveur
+      const { data } = await axios.post(
+        `${BASE_URL}/auth/token/refresh/`,
+        { refresh: refreshToken }
+      );
+
+      const newToken = data.access;
+      localStorage.setItem("access_token", newToken);
+      processQueue(null, newToken);
+      originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      return client(originalRequest);
+    } catch (refreshError) {
+      processQueue(refreshError, null);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      window.location.href = "/connexion";
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
   }
 );
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FileText, ChevronRight, Loader2, Inbox, Calendar, Search } from "lucide-react";
+import { FileText, ChevronRight, Calendar, Plus, FolderOpen } from "lucide-react";
 import * as api from "../../api/endpoints";
-import { Card, Select, EmptyState } from "../../components/ui";
+import { Card, Select, Button, PageLoader, EmptyState } from "../../components/ui";
 import StatusBadge from "../../components/StatusBadge";
 
 const STATUS_OPTIONS = [
@@ -26,84 +26,101 @@ export default function MyRequests() {
 
   useEffect(() => {
     api.listRequests()
-      .then(({ data }) => setRequests(data.results || data))
+      .then(({ data }) => setRequests(data.results || data.data || data))
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
   const filtered = filter ? requests.filter((r) => r.status === filter) : requests;
 
   return (
-    <div className="max-w-4xl space-y-8 pb-10">
+    <div className="max-w-4xl space-y-6 pb-10 animate-fade-in">
+
       {/* En-tête */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Mes demandes</h1>
-          <p className="text-slate-500 text-sm mt-1">Retrouvez l'historique et l'état d'avancement de vos démarches administratives.</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Mes demandes</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Historique et suivi de toutes vos démarches administratives.
+          </p>
         </div>
-        <div className="w-full sm:w-64">
-          <Select 
-            value={filter} 
+        <div className="flex items-center gap-3">
+          <Select
+            value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="rounded-xl border-slate-200 text-sm py-2 shadow-sm"
+            className="w-52 text-sm py-2"
           >
             {STATUS_OPTIONS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </Select>
+          <Link to="/citoyen/nouvelle-demande">
+            <Button size="sm" className="shrink-0">
+              <Plus size={15} /> Nouvelle
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Carte Liste */}
-      <Card className="p-6 rounded-2xl border border-slate-100 shadow-sm bg-white">
+      {/* Liste */}
+      <Card className="p-0 overflow-hidden">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-            <Loader2 className="w-7 h-7 animate-spin mb-2 text-primary" />
-            <p className="text-xs">Chargement de vos demandes...</p>
-          </div>
+          <PageLoader message="Chargement de vos demandes..." />
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-            <Inbox className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-700 font-semibold text-sm">Aucune demande trouvée.</p>
-            <p className="text-slate-400 text-xs mt-1">Vos nouvelles démarches apparaîtront ici une fois créées.</p>
-          </div>
+          <EmptyState
+            icon={FolderOpen}
+            title={filter ? "Aucune demande avec ce statut" : "Aucune demande"}
+            description={filter ? "Changez le filtre pour voir d'autres résultats." : "Vous n'avez pas encore effectué de démarche."}
+            action={
+              !filter && (
+                <Link to="/citoyen/nouvelle-demande">
+                  <Button size="sm" variant="outline">Faire ma première demande</Button>
+                </Link>
+              )
+            }
+          />
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-50">
             {filtered.map((r) => (
               <Link
                 key={r.id}
                 to={`/citoyen/demandes/${r.id}`}
-                className="flex items-center justify-between py-4 -mx-4 px-4 rounded-xl hover:bg-slate-50/80 transition-all duration-200 group"
+                className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors group"
               >
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-primary group-hover:text-white transition-colors">
-                    <FileText size={18} />
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm text-slate-900 group-hover:text-primary transition-colors flex items-center gap-2">
-                      {r.reference}
-                    </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      {r.service_name} <span className="text-slate-300 mx-1">•</span> <span className="text-slate-600 font-medium">{r.center_name}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1 sm:hidden">
-                      <Calendar size={12} />
-                      <span>{new Date(r.created_at).toLocaleDateString("fr-FR")}</span>
-                    </div>
-                  </div>
+                <div className="w-9 h-9 rounded-xl bg-primary/8 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                  <FileText size={16} />
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <div className="text-right hidden sm:block">
-                    <span className="text-xs text-slate-400 flex items-center gap-1 justify-end">
-                      <Calendar size={12} />
-                      {new Date(r.created_at).toLocaleDateString("fr-FR")}
-                    </span>
-                  </div>
-                  <StatusBadge status={r.status} />
-                  <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-slate-900 group-hover:text-primary transition-colors">
+                    {r.reference}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5 truncate">
+                    {r.service_name}
+                    {r.center_name && <> · <span className="text-slate-500 font-medium">{r.center_name}</span></>}
+                  </p>
                 </div>
+
+                <div className="hidden sm:flex items-center gap-1 text-xs text-slate-400 shrink-0">
+                  <Calendar size={12} />
+                  {new Date(r.created_at).toLocaleDateString("fr-FR")}
+                </div>
+
+                <StatusBadge status={r.status} />
+
+                <ChevronRight size={15} className="text-slate-300 group-hover:text-primary transition-colors shrink-0" />
               </Link>
             ))}
+          </div>
+        )}
+
+        {/* Compteur */}
+        {!loading && filtered.length > 0 && (
+          <div className="px-5 py-3 border-t border-slate-50 bg-slate-50/50">
+            <p className="text-xs text-slate-400">
+              {filtered.length} demande{filtered.length > 1 ? "s" : ""}
+              {filter ? " (filtrée)" : ""}
+            </p>
           </div>
         )}
       </Card>

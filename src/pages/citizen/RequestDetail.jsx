@@ -1,14 +1,30 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Loader2, FileText, History, AlertCircle, CheckCircle2, Send, Building, MapPin } from "lucide-react";
+import {
+  ArrowLeft, FileText, History, Send, Building, MapPin,
+  RefreshCw, AlertCircle, CheckCircle2, Package, Printer,
+  Loader2, Copy, Bell,
+} from "lucide-react";
+import toast from "react-hot-toast";
 import * as api from "../../api/endpoints";
-import { Card, Button, Textarea, Alert } from "../../components/ui";
+import { Card, Button, Textarea, Alert, PageLoader } from "../../components/ui";
 import StatusBadge from "../../components/StatusBadge";
 
 const STATUS_LABELS = {
   BROUILLON: "Brouillon", SOUMISE: "Soumise", EN_VERIFICATION: "En vérification",
-  EN_TRAITEMENT: "En traitement", VALIDEE: "Validée", DOCUMENT_DISPONIBLE: "Document disponible",
-  RECUPEREE: "Récupérée", CORRECTION_DEMANDEE: "Correction demandée", REFUSEE: "Refusée", ANNULEE: "Annulée",
+  EN_TRAITEMENT: "En traitement", VALIDEE: "Validée",
+  DOCUMENT_DISPONIBLE: "Document disponible", RECUPEREE: "Récupérée",
+  CORRECTION_DEMANDEE: "Correction demandée", REFUSEE: "Refusée", ANNULEE: "Annulée",
+};
+
+const FIELD_LABELS = {
+  full_name: "Nom complet", date_of_birth: "Date de naissance",
+  place_of_birth: "Lieu de naissance", father_full_name: "Nom du père",
+  mother_full_name: "Nom de la mère", reason: "Motif de la demande",
+};
+
+const CHANNEL_LABELS = {
+  INTERNAL: "Interne", EMAIL: "Email", SMS: "SMS", WHATSAPP: "WhatsApp",
 };
 
 export default function RequestDetail() {
@@ -17,146 +33,204 @@ export default function RequestDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [correctionData, setCorrectionData] = useState({});
 
   function load() {
-    api.getRequest(id).then(({ data }) => {
-      setRequest(data);
-      setCorrectionData(data.form_data || {});
-    }).finally(() => setLoading(false));
+    setLoading(true);
+    api.getRequest(id)
+      .then(({ data }) => {
+        const r = data.data || data;
+        setRequest(r);
+        setCorrectionData(r.form_data || {});
+      })
+      .catch(() => setRequest(null))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => { load(); }, [id]);
 
   async function handleSubmitDraft() {
-    setSubmitting(true);
-    setError("");
+    setSubmitting(true); setError("");
     try {
       await api.submitRequest(id);
       load();
     } catch (err) {
-      setError(err.response?.data?.errors?.detail || "Impossible de soumettre la demande.");
-    } finally {
-      setSubmitting(false);
-    }
+      setError(
+        err.response?.data?.errors?.detail ||
+        err.response?.data?.detail ||
+        "Impossible de soumettre la demande."
+      );
+    } finally { setSubmitting(false); }
   }
 
-  async function handleResubmitCorrection() {
-    setSubmitting(true);
-    setError("");
+  async function handleResubmit() {
+    setSubmitting(true); setError("");
     try {
       await api.updateRequest(id, { form_data: correctionData });
       await api.submitRequest(id);
       load();
     } catch (err) {
-      setError(err.response?.data?.errors?.detail || "Impossible de renvoyer la demande.");
+      setError(
+        err.response?.data?.errors?.detail ||
+        err.response?.data?.detail ||
+        "Impossible de renvoyer la demande."
+      );
+    } finally { setSubmitting(false); }
+  }
+
+  /**
+   * Ouvre le document officiel dans un nouvel onglet.
+   * Utilise Axios (avec Bearer token) pour récupérer le fichier en blob,
+   * puis crée une URL objet temporaire — évite d'exposer le token dans l'URL.
+   */
+  async function handlePrint() {
+    if (!request?.official_document?.id) return;
+    setPrinting(true);
+    try {
+      const { data: blob } = await api.downloadDocument(request.official_document.id);
+      const blobUrl = URL.createObjectURL(blob);
+      const win = window.open(blobUrl, "_blank");
+      // Libère la mémoire après ouverture
+      if (win) {
+        win.addEventListener("load", () => URL.revokeObjectURL(blobUrl), { once: true });
+      } else {
+        // Popup bloqué : fallback téléchargement
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = request.official_document.filename || "document-officiel";
+        a.click();
+        URL.revokeObjectURL(blobUrl);
+        toast("Document téléchargé.", { icon: "📄" });
+      }
+    } catch {
+      toast.error("Impossible d'ouvrir le document. Veuillez réessayer.");
     } finally {
-      setSubmitting(false);
+      setPrinting(false);
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-        <Loader2 className="w-8 h-8 animate-spin mb-3 text-primary" />
-        <p className="text-sm font-medium">Chargement des détails de la demande...</p>
-      </div>
-    );
-  }
+  if (loading) return <PageLoader message="Chargement du dossier..." />;
 
-  if (!request) {
-    return (
-      <div className="max-w-xl mx-auto text-center py-16">
-        <p className="text-slate-700 font-semibold text-base mb-4">Demande introuvable.</p>
-        <Link to="/citoyen/demandes">
-          <Button variant="outline" className="rounded-xl">Retour à mes demandes</Button>
-        </Link>
-      </div>
-    );
-  }
+  if (!request) return (
+    <div className="text-center py-16">
+      <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+      <p className="font-bold text-slate-700 mb-4">Demande introuvable.</p>
+      <Link to="/citoyen/demandes">
+        <Button variant="outline" size="sm">Retour à mes demandes</Button>
+      </Link>
+    </div>
+  );
+
+  // Le bouton impression est visible UNIQUEMENT si :
+  // 1. Le statut est DOCUMENT_DISPONIBLE ou RECUPEREE
+  // 2. ET un document officiel a bien été uploadé par l'agent
+  const canPrint =
+    ["DOCUMENT_DISPONIBLE", "RECUPEREE"].includes(request.status) &&
+    !!request.official_document?.id;
 
   return (
-    <div className="max-w-4xl space-y-8 pb-10">
-      {/* Fil d'ariane & En-tête */}
-      <div>
-        <Link to="/citoyen/demandes" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline mb-4">
-          <ArrowLeft size={14} /> Retour à mes demandes
-        </Link>
-        
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{request.reference}</h1>
-              <StatusBadge status={request.status} />
-            </div>
-            <p className="text-slate-500 text-sm mt-1 flex items-center gap-2 flex-wrap">
-              <span className="font-medium text-slate-700 flex items-center gap-1">
-                <Building size={14} className="text-slate-400" /> {request.service?.name}
-              </span>
-              <span>—</span>
-              <span className="text-slate-500 flex items-center gap-1">
-                <MapPin size={14} className="text-slate-400" /> {request.center?.name}
-              </span>
-            </p>
+    <div className="max-w-4xl space-y-6 pb-10 animate-fade-in">
+
+      {/* Fil d'ariane */}
+      <Link to="/citoyen/demandes" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+        <ArrowLeft size={13} /> Retour à mes demandes
+      </Link>
+
+      {/* En-tête */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-slate-100">
+        <div>
+          <div className="flex items-center gap-3 flex-wrap mb-1.5">
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{request.reference}</h1>
+            <StatusBadge status={request.status} size="lg" />
+          </div>
+          <div className="flex items-center gap-4 text-xs text-slate-400 flex-wrap">
+            <span className="flex items-center gap-1.5">
+              <Building size={12} /> <strong className="text-slate-600">{request.service?.name}</strong>
+            </span>
+            <span>·</span>
+            <span className="flex items-center gap-1.5">
+              <MapPin size={12} /> {request.center?.name}
+            </span>
+            {request.quantity > 1 && (
+              <>
+                <span>·</span>
+                <span className="flex items-center gap-1.5">
+                  <Copy size={12} /> {request.quantity} copies
+                </span>
+              </>
+            )}
           </div>
         </div>
+
+        {/* Bouton impression — visible uniquement si doc officiel disponible */}
+        {canPrint && (
+          <Button
+            onClick={handlePrint}
+            disabled={printing}
+            variant="secondary"
+            size="sm"
+            className="shrink-0 gap-2"
+            title={`Ouvrir : ${request.official_document.filename}`}
+          >
+            {printing
+              ? <><Loader2 size={14} className="animate-spin" /> Ouverture...</>
+              : <><Printer size={14} /> Imprimer le document officiel</>
+            }
+          </Button>
+        )}
       </div>
 
-      {error && <Alert variant="error" className="rounded-xl border border-red-100 shadow-sm">{error}</Alert>}
+      {error && <Alert variant="error">{error}</Alert>}
 
-      {/* État : Brouillon */}
+      {/* ── Bandeaux contextuels ── */}
+
       {request.status === "BROUILLON" && (
-        <Card className="p-6 rounded-2xl border border-amber-100 bg-amber-50/50 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-amber-900">Demande en brouillon</h3>
-            <p className="text-xs text-amber-700">Cette demande n'a pas encore été transmise. Soumettez-la pour lancer son traitement par les services.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-amber-50 border border-amber-200 rounded-2xl">
+          <div>
+            <p className="font-bold text-amber-900 text-sm">Demande en brouillon</p>
+            <p className="text-xs text-amber-700 mt-0.5">Cette demande n'a pas encore été transmise.</p>
           </div>
-          <Button 
-            onClick={handleSubmitDraft} 
+          <Button
+            onClick={handleSubmitDraft}
             disabled={submitting}
-            className="rounded-xl bg-primary hover:bg-primary/90 text-white font-medium shadow-sm shrink-0"
+            className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white"
+            size="sm"
           >
-            {submitting ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={16} className="mr-2" />}
+            {submitting ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
             Soumettre la demande
           </Button>
-        </Card>
+        </div>
       )}
 
-      {/* État : Correction demandée */}
       {request.status === "CORRECTION_DEMANDEE" && (
-        <div className="space-y-6">
-          <Alert variant="warning" className="rounded-xl border border-amber-200 shadow-sm">
-            <span className="font-semibold block mb-1">Note de correction de l'administration :</span>
+        <div className="space-y-4">
+          <Alert variant="warning">
+            <span className="font-bold block mb-1">Note de correction :</span>
             {request.correction_note}
           </Alert>
-
-          <Card className="p-8 rounded-2xl border border-slate-100 shadow-sm bg-white space-y-6">
+          <Card className="p-6 space-y-5">
             <div>
-              <h3 className="font-bold text-slate-900 text-base">Corrigez votre formulaire</h3>
-              <p className="text-slate-500 text-xs mt-0.5">Mettez à jour les informations ci-dessous puis renvoyez votre dossier.</p>
+              <h3 className="font-bold text-slate-900 text-sm">Corrigez votre formulaire</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Mettez à jour les informations et renvoyez votre dossier.</p>
             </div>
-            
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Object.keys(correctionData).map((key) => (
                 <div key={key} className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">{key}</label>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                    {FIELD_LABELS[key] || key}
+                  </label>
                   <Textarea
                     value={correctionData[key] || ""}
                     onChange={(e) => setCorrectionData({ ...correctionData, [key]: e.target.value })}
                     rows={2}
-                    className="rounded-xl border-slate-200 text-sm"
                   />
                 </div>
               ))}
             </div>
-
-            <div className="pt-4 border-t border-slate-100 flex justify-end">
-              <Button 
-                onClick={handleResubmitCorrection} 
-                disabled={submitting}
-                className="rounded-xl bg-primary hover:bg-primary/90 text-white font-medium px-6 shadow-sm"
-              >
-                {submitting ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={16} className="mr-2" />}
+            <div className="flex justify-end pt-3 border-t border-slate-100">
+              <Button onClick={handleResubmit} disabled={submitting} size="sm">
+                {submitting ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
                 Renvoyer la demande corrigée
               </Button>
             </div>
@@ -164,78 +238,144 @@ export default function RequestDetail() {
         </div>
       )}
 
-      {/* État : Refusée */}
       {request.status === "REFUSEE" && (
-        <Alert variant="error" className="rounded-xl border border-red-100 shadow-sm">
-          <span className="font-semibold block mb-1">Motif du refus :</span>
+        <Alert variant="error">
+          <span className="font-bold block mb-1">Motif du refus :</span>
           {request.rejection_reason || "Votre demande n'a pas pu aboutir."}
         </Alert>
       )}
 
-      {/* État : Document disponible */}
       {request.status === "DOCUMENT_DISPONIBLE" && (
-        <Alert variant="success" className="rounded-xl border border-emerald-100 shadow-sm">
-          <span className="font-semibold block mb-1">Document prêt !</span>
-          Votre document est disponible. Rendez-vous au centre <strong className="font-bold">{request.center?.name}</strong> muni de votre pièce d'identité pour le récupérer.
+        <div className="flex items-start gap-3 p-5 bg-emerald-50 border border-emerald-200 rounded-2xl">
+          <Package size={20} className="text-emerald-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-bold text-emerald-900 text-sm">Document prêt !</p>
+            <p className="text-xs text-emerald-700 mt-0.5">
+              Rendez-vous au centre <strong>{request.center?.name}</strong> muni de votre pièce d'identité.
+              {request.quantity > 1 && (
+                <span className="block mt-0.5">
+                  {request.quantity} copies physiques sont prêtes à être remises.
+                </span>
+              )}
+            </p>
+          </div>
+          {canPrint && (
+            <Button
+              onClick={handlePrint}
+              disabled={printing}
+              variant="secondary"
+              size="sm"
+              className="shrink-0"
+            >
+              {printing
+                ? <><Loader2 size={13} className="animate-spin" /> Ouverture...</>
+                : <><Printer size={13} /> Ouvrir</>
+              }
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Doc disponible mais pas encore uploadé par l'agent */}
+      {request.status === "DOCUMENT_DISPONIBLE" && !request.official_document?.id && (
+        <Alert variant="info">
+          Le document officiel sera disponible dès que l'agent l'aura déposé sur la plateforme.
         </Alert>
       )}
 
-      {/* Grille principale d'informations & historique */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* Informations de la demande */}
-        <Card className="p-6 rounded-2xl border border-slate-100 shadow-sm bg-white space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <FileText size={18} className="text-primary" />
-            <h3 className="font-bold text-slate-900 text-sm">Informations de la demande</h3>
-          </div>
+      {request.status === "RECUPEREE" && (
+        <Alert variant="success">
+          <span className="font-bold">Dossier finalisé.</span> Ce document a été récupéré. La démarche est clôturée.
+        </Alert>
+      )}
 
-          <div className="space-y-3 text-sm">
+      {/* ── Grille principale ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        {/* Informations renseignées */}
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
+            <FileText size={16} className="text-primary" />
+            <h3 className="font-bold text-slate-900 text-sm">Informations renseignées</h3>
+          </div>
+          <div className="px-5 py-4 space-y-2">
             {Object.entries(request.form_data || {}).length === 0 ? (
-              <p className="text-slate-400 text-xs italic">Aucune information additionnelle.</p>
+              <p className="text-xs text-slate-400 italic py-4 text-center">Aucune information additionnelle.</p>
             ) : (
               Object.entries(request.form_data || {}).map(([key, value]) => (
                 <div key={key} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
-                  <span className="text-slate-500 font-medium text-xs">{key}</span>
-                  <span className="text-slate-900 font-semibold text-right">{value || "—"}</span>
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    {FIELD_LABELS[key] || key}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-900 text-right max-w-[55%] truncate">
+                    {value || "—"}
+                  </span>
                 </div>
               ))
             )}
+
+            {/* Quantité et canal dans la même carte */}
+            <div className="flex justify-between items-center py-2 border-b border-slate-50">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Copy size={11} /> Copies demandées
+              </span>
+              <span className="text-sm font-bold text-slate-900">
+                {request.quantity ?? 1}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Bell size={11} /> Canal de notif.
+              </span>
+              <div className="text-right">
+                <span className="text-sm font-bold text-slate-900">
+                  {CHANNEL_LABELS[request.notification_channel] || request.notification_channel}
+                </span>
+                {request.notification_contact && (
+                  <p className="text-[11px] text-slate-400">{request.notification_contact}</p>
+                )}
+              </div>
+            </div>
           </div>
         </Card>
 
-        {/* Historique des statuts */}
-        <Card className="p-6 rounded-2xl border border-slate-100 shadow-sm bg-white space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <History size={18} className="text-primary" />
+        {/* Historique */}
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
+            <History size={16} className="text-primary" />
             <h3 className="font-bold text-slate-900 text-sm">Historique du dossier</h3>
           </div>
-
-          <div className="space-y-4 pl-2">
+          <div className="px-5 py-4">
             {(!request.status_history || request.status_history.length === 0) ? (
-              <p className="text-slate-400 text-xs italic">Aucun historique disponible.</p>
+              <p className="text-xs text-slate-400 italic py-4 text-center">Aucun historique disponible.</p>
             ) : (
-              request.status_history.map((h, index) => (
-                <div key={h.id || index} className="flex gap-3 relative pb-4 last:pb-0">
-                  {index < request.status_history.length - 1 && (
-                    <div className="absolute left-[5px] top-4 w-0.5 h-full bg-slate-100" />
-                  )}
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0 ring-4 ring-primary/10" />
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-bold text-slate-900">
-                      {STATUS_LABELS[h.new_status] || h.new_status}
+              <div className="space-y-0 relative">
+                {request.status_history.map((h, idx) => (
+                  <div key={h.id || idx} className="flex gap-3 pb-4 last:pb-0 relative">
+                    {idx < request.status_history.length - 1 && (
+                      <div className="absolute left-[5px] top-4 bottom-0 w-px bg-slate-100" />
+                    )}
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-primary/10 shrink-0 mt-1.5 z-10" />
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">
+                        {STATUS_LABELS[h.new_status] || h.new_status}
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {new Date(h.created_at).toLocaleString("fr-FR")}
+                        {h.changed_by_name && ` · ${h.changed_by_name}`}
+                      </p>
+                      {h.comment && (
+                        <p className="text-xs text-slate-600 mt-1.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
+                          {h.comment}
+                        </p>
+                      )}
                     </div>
-                    <div className="text-[11px] text-slate-400">
-                      {new Date(h.created_at).toLocaleString("fr-FR")} {h.changed_by_name && `• ${h.changed_by_name}`}
-                    </div>
-                    {h.comment && <div className="text-xs text-slate-600 mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">{h.comment}</div>}
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </Card>
-
       </div>
     </div>
   );

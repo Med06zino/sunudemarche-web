@@ -1,17 +1,48 @@
 import { useEffect, useState } from "react";
-import { User, Phone, MapPin, CreditCard, Calendar, CheckCircle2, Loader2, Save } from "lucide-react";
+import {
+  User, Phone, CreditCard, Loader2, Save, CheckCircle2,
+  Mail, Bell, BellOff, MessageCircle,
+} from "lucide-react";
 import * as api from "../../api/endpoints";
-import { Card, Input, Button, Alert } from "../../components/ui";
+import { Card, Input, Button, Alert, Badge } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
+
+// ─── Configuration des canaux ──────────────────────────────────────────────
+const CHANNEL_CONFIG = {
+  INTERNAL: { Icon: BellOff,       label: "Interne seulement", desc: "Notifications dans l'espace SunuDémarche." },
+  EMAIL:    { Icon: Mail,          label: "Email",              desc: "Alertes envoyées par email." },
+  SMS:      { Icon: Phone,         label: "SMS",                desc: "Alertes par SMS." },
+  WHATSAPP: { Icon: MessageCircle, label: "WhatsApp",           desc: "Alertes par WhatsApp." },
+};
+
+// ─── Section card ──────────────────────────────────────────────────────────
+function Section({ icon: Icon, title, children }) {
+  return (
+    <div className="pt-6 first:pt-0">
+      <div className="flex items-center gap-2 mb-5 pb-3 border-b border-slate-100">
+        <div className="w-7 h-7 rounded-lg bg-primary/8 text-primary flex items-center justify-center">
+          <Icon size={14} />
+        </div>
+        <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">{title}</h3>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function CitizenProfile() {
   const { user, setUser } = useAuth();
   const [form, setForm] = useState({
     first_name: "", last_name: "", phone_number: "",
-    citizen_profile: { date_of_birth: "", place_of_birth: "", national_id_number: "", address: "" },
+    citizen_profile: {
+      date_of_birth: "", place_of_birth: "",
+      national_id_number: "", address: "",
+      default_notification_channel: "INTERNAL",
+    },
   });
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -24,6 +55,8 @@ export default function CitizenProfile() {
           place_of_birth: user.citizen_profile?.place_of_birth || "",
           national_id_number: user.citizen_profile?.national_id_number || "",
           address: user.citizen_profile?.address || "",
+          default_notification_channel:
+            user.citizen_profile?.default_notification_channel || "INTERNAL",
         },
       });
     }
@@ -31,133 +64,133 @@ export default function CitizenProfile() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setSaving(true);
-    setSaved(false);
+    setSaving(true); setSaved(false); setError("");
     try {
       const { data } = await api.updateProfile(form);
       setUser(data.data || data);
       setSaved(true);
-      setTimeout(() => setSaved(false), 4000); // Disparaît après 4s
-    } catch (err) {
-      console.error("Erreur lors de la mise à jour du profil :", err);
+      setTimeout(() => setSaved(false), 4000);
+    } catch {
+      setError("Erreur lors de la mise à jour. Veuillez réessayer.");
     } finally {
       setSaving(false);
     }
   }
 
+  const cp = form.citizen_profile;
+  const setcp = (field) => (e) =>
+    setForm({ ...form, citizen_profile: { ...cp, [field]: e.target.value } });
+  const setChannel = (value) =>
+    setForm({ ...form, citizen_profile: { ...cp, default_notification_channel: value } });
+
   return (
-    <div className="max-w-3xl space-y-8 pb-10">
-      {/* En-tête */}
-      <div className="border-b border-slate-100 pb-6">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Mon profil</h1>
-        <p className="text-slate-500 text-sm mt-1">Gérez vos informations personnelles et administratives en toute sécurité.</p>
+    <div className="max-w-3xl space-y-6 pb-10 animate-fade-in">
+      <div>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Mon profil</h1>
+        <p className="text-slate-500 text-sm mt-1">Gérez vos informations personnelles et vos préférences.</p>
       </div>
 
       {saved && (
-        <div className="animate-fadeIn">
-          <Alert variant="success" className="rounded-xl border border-emerald-100 shadow-sm">
-            Profil mis à jour avec succès.
-          </Alert>
-        </div>
+        <Alert variant="success">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={15} /> Profil mis à jour avec succès.
+          </div>
+        </Alert>
       )}
+      {error && <Alert variant="error">{error}</Alert>}
 
-      {/* Carte principale */}
-      <Card className="p-8 rounded-2xl border border-slate-100 shadow-sm bg-white">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          
-          {/* Section Identité */}
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <User size={16} className="text-primary" />
-              Informations d'identité
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Input 
-                label="Prénom" 
-                value={form.first_name} 
-                onChange={(e) => setForm({ ...form, first_name: e.target.value })} 
+      <Card className="p-6 sm:p-8">
+        <form onSubmit={handleSubmit} className="space-y-6 divide-y divide-slate-100">
+
+          {/* Identité */}
+          <Section icon={User} title="Identité">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input label="Prénom" value={form.first_name}
+                onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
+              <Input label="Nom" value={form.last_name}
+                onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+            </div>
+          </Section>
+
+          {/* Coordonnées */}
+          <Section icon={Mail} title="Coordonnées">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Email (non modifiable)"
+                value={user?.email || ""}
+                disabled
+                className="bg-slate-50 text-slate-400 cursor-not-allowed"
+                hint="L'adresse email ne peut pas être modifiée."
               />
-              <Input 
-                label="Nom" 
-                value={form.last_name} 
-                onChange={(e) => setForm({ ...form, last_name: e.target.value })} 
+              <Input
+                label="Téléphone"
+                type="tel"
+                placeholder="+221 77 000 00 00"
+                value={form.phone_number}
+                onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
               />
             </div>
-          </div>
+          </Section>
 
-          {/* Section Contact & Compte */}
-          <div className="pt-6 border-t border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Phone size={16} className="text-primary" />
-              Coordonnées
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Input 
-                label="Email (non modifiable)" 
-                value={user?.email || ""} 
-                disabled 
-                className="bg-slate-50 text-slate-500 cursor-not-allowed" 
-              />
-              <Input 
-                label="Téléphone" 
-                value={form.phone_number} 
-                onChange={(e) => setForm({ ...form, phone_number: e.target.value })} 
-              />
+          {/* État civil & Adresse */}
+          <Section icon={CreditCard} title="État civil & Adresse">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input label="Date de naissance" type="date"
+                value={cp.date_of_birth} onChange={setcp("date_of_birth")} />
+              <Input label="Lieu de naissance" placeholder="Ex : Dakar"
+                value={cp.place_of_birth} onChange={setcp("place_of_birth")} />
+              <Input label="N° pièce d'identité" placeholder="CNI / Passeport"
+                value={cp.national_id_number} onChange={setcp("national_id_number")} />
+              <Input label="Adresse de résidence" placeholder="Ex : Liberté 6, Dakar"
+                value={cp.address} onChange={setcp("address")} />
             </div>
-          </div>
+          </Section>
 
-          {/* Section Informations complémentaires */}
-          <div className="pt-6 border-t border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <CreditCard size={16} className="text-primary" />
-              Informations d'état civil & Adresse
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Input
-                label="Date de naissance" 
-                type="date"
-                value={form.citizen_profile.date_of_birth}
-                onChange={(e) => setForm({ ...form, citizen_profile: { ...form.citizen_profile, date_of_birth: e.target.value } })}
-              />
-              <Input
-                label="Lieu de naissance"
-                value={form.citizen_profile.place_of_birth}
-                placeholder="Ex: Dakar"
-                onChange={(e) => setForm({ ...form, citizen_profile: { ...form.citizen_profile, place_of_birth: e.target.value } })}
-              />
-              <Input
-                label="N° pièce d'identité (CNI / Passeport)"
-                value={form.citizen_profile.national_id_number}
-                placeholder="Numéro d'identification"
-                onChange={(e) => setForm({ ...form, citizen_profile: { ...form.citizen_profile, national_id_number: e.target.value } })}
-              />
-              <Input
-                label="Adresse de résidence"
-                value={form.citizen_profile.address}
-                placeholder="Ex: Liberté 6, Dakar"
-                onChange={(e) => setForm({ ...form, citizen_profile: { ...form.citizen_profile, address: e.target.value } })}
-              />
+          {/* Canal de notification par défaut */}
+          <Section icon={Bell} title="Préférences de notification">
+            <p className="text-xs text-slate-500 mb-4">
+              Canal utilisé par défaut pour les nouvelles demandes. Vous pouvez le modifier
+              individuellement à chaque nouvelle demande.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {Object.entries(CHANNEL_CONFIG).map(([value, cfg]) => {
+                const Icon = cfg.Icon;
+                const selected = cp.default_notification_channel === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setChannel(value)}
+                    className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 text-xs font-semibold
+                      transition-all duration-150 cursor-pointer text-center
+                      ${selected
+                        ? "border-primary bg-primary/5 text-primary shadow-sm"
+                        : "border-slate-100 text-slate-500 hover:border-slate-200 hover:bg-slate-50"}`}
+                    title={cfg.desc}
+                  >
+                    <Icon size={20} className={selected ? "text-primary" : "text-slate-400"} />
+                    {cfg.label}
+                  </button>
+                );
+              })}
             </div>
-          </div>
+            {cp.default_notification_channel !== "INTERNAL" && (
+              <div className="mt-3">
+                <Alert variant="info">
+                  Canal <strong>{CHANNEL_CONFIG[cp.default_notification_channel]?.label}</strong> sélectionné.
+                  Vous pourrez renseigner le contact associé lors de chaque nouvelle demande.
+                </Alert>
+              </div>
+            )}
+          </Section>
 
-          {/* Bouton de soumission */}
-          <div className="pt-6 border-t border-slate-100 flex items-center justify-end">
-            <Button 
-              type="submit" 
-              disabled={saving}
-              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-medium px-6 py-2.5 rounded-xl transition-all shadow-sm"
-            >
-              {saving ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Enregistrement...</span>
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  <span>Mettre à jour le profil</span>
-                </>
-              )}
+          {/* Bouton sauvegarde */}
+          <div className="flex justify-end pt-5">
+            <Button type="submit" disabled={saving}>
+              {saving
+                ? <><Loader2 size={15} className="animate-spin" /> Enregistrement...</>
+                : <><Save size={15} /> Enregistrer les modifications</>
+              }
             </Button>
           </div>
         </form>

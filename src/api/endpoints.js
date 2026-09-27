@@ -9,38 +9,67 @@ export const logout = (refresh) => client.post("/auth/logout/", { refresh });
 export const getProfile = () => client.get("/profile/");
 export const updateProfile = (payload) => client.patch("/profile/", payload);
 
-// --- Services / Communes / Centres -----------------------------------------
+// --- Services / Communes / Centres ----------------------------------------
 export const listServices = () => client.get("/services/");
 export const getService = (id) => client.get(`/services/${id}/`);
 export const listCommunes = () => client.get("/communes/");
 export const listCenters = (params) => client.get("/centers/", { params });
 
-// --- Demandes (citoyen) -----------------------------------------------------
+// --- Demandes (citoyen) ---------------------------------------------------
 export const listRequests = () => client.get("/requests/");
 export const getRequest = (id) => client.get(`/requests/${id}/`);
 export const createRequest = (payload) => client.post("/requests/", payload);
 export const updateRequest = (id, payload) => client.patch(`/requests/${id}/`, payload);
 export const submitRequest = (id) => client.post(`/requests/${id}/submit/`);
 
-// --- Documents ---------------------------------------------------------------
+// --- Documents ------------------------------------------------------------
 export const uploadDocument = (requestId, formData) =>
   client.post(`/requests/${requestId}/documents/`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-export const downloadDocumentUrl = (id) =>
+
+/**
+ * Upload du document officiel par un agent.
+ * POST /api/v1/agent/requests/{requestId}/official-document/
+ */
+export const uploadOfficialDocument = (requestId, formData) =>
+  client.post(`/agent/requests/${requestId}/official-document/`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+/**
+ * Retourne l'URL de téléchargement/aperçu d'un document.
+ * À utiliser avec window.open() ou comme href — nécessite le token Bearer
+ * injecté via l'intercepteur Axios (appeler downloadDocument() à la place
+ * pour une ouverture propre dans un nouvel onglet).
+ */
+export const getDocumentDownloadUrl = (id) =>
   `${client.defaults.baseURL}/documents/${id}/download/`;
 
-// --- Notifications ---------------------------------------------------------------
+/**
+ * Télécharge (ou ouvre) un document via Axios pour hériter du token Bearer.
+ * Retourne un Blob URL utilisable avec window.open() ou <a href>.
+ */
+export const downloadDocument = (id) =>
+  client.get(`/documents/${id}/download/`, { responseType: "blob" });
+
+// --- Notifications --------------------------------------------------------
 export const listNotifications = () => client.get("/notifications/");
 export const markNotificationRead = (id) => client.patch(`/notifications/${id}/read/`);
 
-// --- Agent ---------------------------------------------------------------
+/**
+ * GET /api/v1/notifications/channels/
+ * Retourne [{value, label}] des canaux disponibles.
+ */
+export const listNotificationChannels = () => client.get("/notifications/channels/");
+
+// --- Agent ----------------------------------------------------------------
 export const listAgentRequests = (params) => client.get("/agent/requests/", { params });
 export const getAgentRequest = (id) => client.get(`/agent/requests/${id}/`);
 export const changeRequestStatus = (id, payload) =>
   client.patch(`/agent/requests/${id}/status/`, payload);
 
-// --- Admin ---------------------------------------------------------------
+// --- Admin ----------------------------------------------------------------
 export const getAdminStatistics = () => client.get("/admin/statistics/");
 export const listAdminUsers = () => client.get("/admin/users/");
 export const listAdminAgents = () => client.get("/admin/agents/");

@@ -1,93 +1,89 @@
 import { useEffect, useState } from "react";
-import { Users, Loader2, Shield, Building2, BadgeCheck, Inbox } from "lucide-react";
+import { UserCog, Search, FolderOpen } from "lucide-react";
 import * as api from "../../api/endpoints";
-import { Card } from "../../components/ui";
+import { Card, PageLoader, EmptyState, Badge } from "../../components/ui";
 
 export default function AdminAgents() {
   const [agents, setAgents] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    setLoading(true);
     api.listAdminAgents()
-      .then(({ data }) => setAgents(data.results || data))
+      .then(({ data }) => {
+        const list = data.results || data.data || data;
+        setAgents(list);
+        setFiltered(list);
+      })
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const q = search.toLowerCase();
+    setFiltered(
+      q ? agents.filter((a) =>
+        `${a.full_name} ${a.email} ${a.center_name} ${a.matricule}`.toLowerCase().includes(q)
+      ) : agents
+    );
+  }, [search, agents]);
+
   return (
-    <div className="max-w-5xl space-y-8 pb-10">
-      {/* En-tête */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+    <div className="max-w-5xl space-y-6 pb-10 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Gestion des agents</h1>
-          <p className="text-slate-500 text-sm mt-1">Consultez la liste des agents enregistrés, leurs matricules et leurs centres d'affectation.</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Agents</h1>
+          <p className="text-slate-500 text-sm mt-1">Agents enregistrés et leurs affectations.</p>
+        </div>
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            type="text" placeholder="Rechercher..."
+            value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all shadow-sm"
+          />
         </div>
       </div>
 
-      {/* Tableau / Carte des agents */}
-      <Card className="p-0 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
+      <Card className="p-0 overflow-hidden">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-            <Loader2 className="w-7 h-7 animate-spin mb-2 text-primary" />
-            <p className="text-xs">Chargement des agents...</p>
-          </div>
-        ) : agents.length === 0 ? (
-          <div className="text-center py-16 bg-slate-50/50">
-            <Inbox className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-700 font-semibold text-sm">Aucun agent trouvé</p>
-            <p className="text-slate-400 text-xs mt-1">Aucun compte agent n'est enregistré pour le moment.</p>
-          </div>
+          <PageLoader message="Chargement des agents..." />
+        ) : filtered.length === 0 ? (
+          <EmptyState icon={UserCog} title="Aucun agent trouvé"
+            description={search ? "Modifiez votre recherche." : "Aucun agent enregistré."} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse">
-              <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wider font-semibold">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50/80 border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-4 flex items-center gap-2">
-                    <Users size={14} className="text-slate-400" /> Nom complet
-                  </th>
-                  <th className="px-6 py-4">
-                    <span className="flex items-center gap-1.5">
-                      <BadgeCheck size={14} className="text-slate-400" /> Matricule
-                    </span>
-                  </th>
-                  <th className="px-6 py-4">
-                    <span className="flex items-center gap-1.5">
-                      <Building2 size={14} className="text-slate-400" /> Centre
-                    </span>
-                  </th>
-                  <th className="px-6 py-4">
-                    <span className="flex items-center gap-1.5">
-                      <Shield size={14} className="text-slate-400" /> Statut
-                    </span>
-                  </th>
+                  {["Agent", "Matricule", "Centre", "Statut"].map((h) => (
+                    <th key={h} className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide">{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {agents.map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-900">
-                      {a.full_name || "—"}
+              <tbody className="divide-y divide-slate-50">
+                {filtered.map((a) => (
+                  <tr key={a.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <p className="font-bold text-slate-900">{a.full_name || "—"}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{a.email}</p>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 font-mono text-xs">
-                      {a.matricule || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-slate-700 font-medium">
-                      {a.center_name || "—"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                        a.is_active_agent 
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60" 
-                          : "bg-slate-100 text-slate-600 border border-slate-200/60"
-                      }`}>
+                    <td className="px-5 py-3.5 font-mono text-xs text-slate-600">{a.matricule || "—"}</td>
+                    <td className="px-5 py-3.5 font-medium text-slate-700">{a.center_name || "—"}</td>
+                    <td className="px-5 py-3.5">
+                      <Badge variant={a.is_active_agent ? "success" : "default"}>
                         <span className={`w-1.5 h-1.5 rounded-full ${a.is_active_agent ? "bg-emerald-500" : "bg-slate-400"}`} />
                         {a.is_active_agent ? "Actif" : "Inactif"}
-                      </span>
+                      </Badge>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            <div className="px-5 py-3 border-t border-slate-50 bg-slate-50/50">
+              <p className="text-xs text-slate-400">{filtered.length} agent{filtered.length > 1 ? "s" : ""}</p>
+            </div>
           </div>
         )}
       </Card>

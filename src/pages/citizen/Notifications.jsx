@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Bell, CheckCircle2, Loader2, Sparkles, Inbox } from "lucide-react";
+import { Bell, Inbox, CheckCheck } from "lucide-react";
 import * as api from "../../api/endpoints";
-import { Card, EmptyState } from "../../components/ui";
+import { Card, Button, PageLoader } from "../../components/ui";
 
 export default function CitizenNotifications() {
   const [notifications, setNotifications] = useState([]);
@@ -9,78 +9,91 @@ export default function CitizenNotifications() {
 
   function load() {
     api.listNotifications()
-      .then(({ data }) => setNotifications(data.results || data))
+      .then(({ data }) => setNotifications(data.results || data.data || data))
+      .catch(console.error)
       .finally(() => setLoading(false));
   }
 
   useEffect(() => { load(); }, []);
 
   async function handleRead(id) {
-    await api.markNotificationRead(id);
-    load();
+    await api.markNotificationRead(id).catch(() => {});
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+    );
   }
 
+  async function markAllRead() {
+    const unread = notifications.filter((n) => !n.is_read);
+    await Promise.all(unread.map((n) => api.markNotificationRead(n.id).catch(() => {})));
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  }
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
   return (
-    <div className="max-w-3xl space-y-8 pb-10">
+    <div className="max-w-2xl space-y-6 pb-10 animate-fade-in">
+
       {/* En-tête */}
-      <div className="border-b border-slate-100 pb-6">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Notifications</h1>
-        <p className="text-slate-500 text-sm mt-1">Restez informé en temps réel de l'avancement de vos demandes administratives.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Notifications</h1>
+          <p className="text-slate-500 text-sm mt-1">Suivi en temps réel de vos dossiers.</p>
+        </div>
+        {unreadCount > 0 && (
+          <Button size="sm" variant="outline" onClick={markAllRead} className="gap-1.5 text-xs">
+            <CheckCheck size={14} /> Tout marquer lu
+          </Button>
+        )}
       </div>
 
-      {/* Carte principale */}
-      <Card className="p-6 rounded-2xl border border-slate-100 shadow-sm bg-white">
+      {/* Badge non lus */}
+      {unreadCount > 0 && (
+        <div className="inline-flex items-center gap-2 text-xs font-semibold text-primary bg-primary/8 px-3 py-1.5 rounded-full border border-primary/15">
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          {unreadCount} notification{unreadCount > 1 ? "s" : ""} non lue{unreadCount > 1 ? "s" : ""}
+        </div>
+      )}
+
+      <Card className="p-0 overflow-hidden">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-            <Loader2 className="w-7 h-7 animate-spin mb-2 text-primary" />
-            <p className="text-xs">Chargement de vos notifications...</p>
-          </div>
+          <PageLoader message="Chargement des notifications..." />
         ) : notifications.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-            <Inbox className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-700 font-semibold text-sm">Aucune notification pour le moment.</p>
-            <p className="text-slate-400 text-xs mt-1">Vous serez notifié dès qu'un changement intervient sur vos dossiers.</p>
+          <div className="text-center py-16 px-4">
+            <Inbox className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+            <p className="font-bold text-slate-600 text-sm">Aucune notification</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Vous serez notifié dès qu'un changement intervient sur vos dossiers.
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-50">
             {notifications.map((n) => (
               <button
                 key={n.id}
                 onClick={() => !n.is_read && handleRead(n.id)}
-                className={`w-full text-left flex items-start gap-4 py-4 -mx-4 px-4 rounded-xl transition-all duration-200 ${
-                  n.is_read ? "hover:bg-slate-50/80" : "bg-primary/5 hover:bg-primary/10"
-                }`}
+                className={`w-full text-left flex items-start gap-4 px-5 py-4 transition-colors
+                  ${n.is_read ? "hover:bg-slate-50" : "bg-primary/[0.03] hover:bg-primary/[0.06] cursor-pointer"}`}
               >
-                {/* Indicateur de lecture ou icône */}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                  n.is_read ? "bg-slate-100 text-slate-400" : "bg-primary text-white shadow-sm shadow-primary/30"
-                }`}>
-                  <Bell size={18} />
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5
+                  ${n.is_read ? "bg-slate-100 text-slate-400" : "bg-primary text-white shadow-sm shadow-primary/20"}`}>
+                  <Bell size={16} />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-sm ${n.is_read ? "font-medium text-slate-800" : "font-bold text-slate-900"}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className={`text-sm ${n.is_read ? "font-medium text-slate-700" : "font-bold text-slate-900"}`}>
                       {n.title}
-                    </span>
+                    </p>
                     {!n.is_read && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
-                        Nouveau
-                      </span>
+                      <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
                     )}
                   </div>
-                  
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    {n.message}
-                  </p>
-
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{n.message}</p>
                   <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-2">
                     <span>{new Date(n.created_at).toLocaleString("fr-FR")}</span>
                     {n.request_reference && (
-                      <>
-                        <span>•</span>
-                        <span className="font-medium text-slate-600">{n.request_reference}</span>
-                      </>
+                      <><span>·</span><span className="font-medium text-slate-500">{n.request_reference}</span></>
                     )}
                   </div>
                 </div>

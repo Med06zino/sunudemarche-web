@@ -1,64 +1,93 @@
-import { Bell, Shield, Smartphone, Mail, MessageSquare } from "lucide-react";
+import { useState } from "react";
+import { Bell, Smartphone, Mail, MessageSquare, Info } from "lucide-react";
 import { Card, Alert } from "../../components/ui";
 
-export default function CitizenSettings() {
+function Toggle({ checked, onChange, label, description }) {
   return (
-    <div className="max-w-3xl space-y-8 pb-10">
+    <div className="flex items-center justify-between py-3.5 border-b border-slate-50 last:border-0">
+      <div className="space-y-0.5 pr-4">
+        <p className="text-sm font-semibold text-slate-800">{label}</p>
+        {description && <p className="text-xs text-slate-400 leading-relaxed">{description}</p>}
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200
+          ${checked ? "bg-primary" : "bg-slate-200"}`}
+        role="switch"
+        aria-checked={checked}
+      >
+        <span
+          className={`inline-block h-4.5 w-4.5 rounded-full bg-white shadow-sm transform transition-transform duration-200
+            ${checked ? "translate-x-5" : "translate-x-1"}`}
+          style={{ height: "18px", width: "18px" }}
+        />
+      </button>
+    </div>
+  );
+}
+
+const CHANNELS = [
+  { icon: Mail,          label: "Email",    soon: true },
+  { icon: Smartphone,    label: "SMS",      soon: true },
+  { icon: MessageSquare, label: "WhatsApp", soon: true },
+];
+
+export default function CitizenSettings() {
+  const [notifInternal, setNotifInternal] = useState(true);
+
+  return (
+    <div className="max-w-2xl space-y-6 pb-10 animate-fade-in">
+
       {/* En-tête */}
-      <div className="border-b border-slate-100 pb-6">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Paramètres</h1>
-        <p className="text-slate-500 text-sm mt-1">Gérez vos préférences de compte et de notifications.</p>
+      <div>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Paramètres</h1>
+        <p className="text-slate-500 text-sm mt-1">Gérez vos préférences de notifications et de compte.</p>
       </div>
 
-      {/* Carte des Préférences */}
-      <Card className="p-8 rounded-2xl border border-slate-100 shadow-sm bg-white space-y-6">
-        
-        {/* Section Notifications */}
-        <div>
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Bell size={16} className="text-primary" />
-            Préférences de notification
-          </h3>
-          
-          <div className="flex items-center justify-between py-3 hover:bg-slate-50/80 -mx-4 px-4 rounded-xl transition-colors">
-            <div className="space-y-0.5">
-              <div className="font-semibold text-sm text-slate-900">Notifications internes</div>
-              <div className="text-xs text-slate-500">Recevoir une notification sur la plateforme à chaque changement de statut.</div>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" defaultChecked className="sr-only peer" />
-              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-            </label>
+      {/* Notifications actives */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2.5 mb-5 pb-4 border-b border-slate-100">
+          <div className="w-8 h-8 rounded-lg bg-primary/8 text-primary flex items-center justify-center">
+            <Bell size={15} />
           </div>
+          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Notifications</h2>
         </div>
 
-        {/* Section Bientôt disponible */}
-        <div className="pt-6 border-t border-slate-100 space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-            <Smartphone size={16} className="text-primary" />
-            Canaux multicanaux (Prochainement)
-          </h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col items-center text-center space-y-2">
-              <Mail size={20} className="text-slate-400" />
-              <span className="text-xs font-semibold text-slate-700">Email</span>
-            </div>
-            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col items-center text-center space-y-2">
-              <Smartphone size={20} className="text-slate-400" />
-              <span className="text-xs font-semibold text-slate-700">SMS</span>
-            </div>
-            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col items-center text-center space-y-2">
-              <MessageSquare size={20} className="text-slate-400" />
-              <span className="text-xs font-semibold text-slate-700">WhatsApp</span>
-            </div>
-          </div>
+        <Toggle
+          checked={notifInternal}
+          onChange={setNotifInternal}
+          label="Notifications internes"
+          description="Recevez une alerte sur la plateforme à chaque changement de statut de vos dossiers."
+        />
+      </Card>
 
-          <Alert variant="info" className="rounded-xl border border-blue-100 bg-blue-50/50 text-blue-900 shadow-sm mt-4">
-            Les notifications par SMS, email et WhatsApp seront bientôt activées pour un suivi encore plus direct de vos démarches.
-          </Alert>
+      {/* Canaux à venir */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2.5 mb-5 pb-4 border-b border-slate-100">
+          <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <Smartphone size={15} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Canaux multicanaux</h2>
+          </div>
+          <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+            Prochainement
+          </span>
         </div>
 
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          {CHANNELS.map(({ icon: Icon, label }) => (
+            <div key={label} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 border border-slate-100 opacity-60">
+              <Icon size={20} className="text-slate-400" />
+              <span className="text-xs font-semibold text-slate-500">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        <Alert variant="info">
+          Les notifications par SMS, email et WhatsApp seront disponibles dans une prochaine mise à jour pour un suivi encore plus direct de vos démarches.
+        </Alert>
       </Card>
     </div>
   );

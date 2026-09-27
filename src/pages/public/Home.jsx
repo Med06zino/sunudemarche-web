@@ -5,6 +5,7 @@ import {
   Star, FileText, ChevronRight,
 } from "lucide-react";
 import { Button } from "../../components/ui";
+import { useAuth } from "../../context/AuthContext";
 
 const STEPS = [
   { n: "01", icon: UserPlus,    title: "Créez votre compte",     desc: "Inscription rapide avec votre adresse email." },
@@ -35,6 +36,12 @@ const TRUST = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
+
+  // Si l'utilisateur est déjà connecté en tant que citoyen, le CTA le
+  // redirige directement vers le formulaire de nouvelle demande.
+  // Sinon, il va vers l'inscription (parcours visiteur standard).
+  const ctaHref = user?.role === "CITIZEN" ? "/citoyen/nouvelle-demande" : "/inscription";
   return (
     <div className="bg-background text-text">
 
@@ -48,12 +55,13 @@ export default function Home() {
 
         <div className="relative max-w-5xl mx-auto px-4 pt-16 pb-20 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/8 text-primary text-xs font-semibold mb-6 border border-primary/15">
-            <Star size={12} className="fill-primary" />
+            {/* <Star size={12} className="fill-primary" /> */}
             Plateforme officielle des démarches au Sénégal
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight mb-5">
-            Vos démarches administratives,<br className="hidden sm:block" />
+            Vos démarches administratives,
+            {/* <br className="hidden sm:block" /> */}
             <span className="text-primary"> en ligne et sans stress.</span>
           </h1>
 
@@ -62,7 +70,7 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/inscription">
+            <Link to={ctaHref}>
               <Button size="lg" className="w-full sm:w-auto shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30">
                 Commencer ma démarche
                 <ArrowRight size={17} />
@@ -160,7 +168,7 @@ export default function Home() {
                 Faites votre demande en ligne et suivez l'avancement de votre dossier en toute sérénité. Simple, rapide et sécurisé.
               </p>
             </div>
-            <Link to="/inscription" className="shrink-0">
+            <Link to={ctaHref} className="shrink-0">
               <button className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-primary font-bold text-sm hover:bg-slate-50 transition-colors shadow-lg">
                 Faire ma demande
                 <ArrowRight size={16} />

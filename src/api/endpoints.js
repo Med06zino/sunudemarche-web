@@ -10,10 +10,14 @@ export const getProfile = () => client.get("/profile/");
 export const updateProfile = (payload) => client.patch("/profile/", payload);
 
 // --- Services / Communes / Centres ----------------------------------------
-export const listServices = () => client.get("/services/");
-export const getService = (id) => client.get(`/services/${id}/`);
-export const listCommunes = () => client.get("/communes/");
-export const listCenters = (params) => client.get("/centers/", { params });
+// Ces routes sont publiques (AllowAny). On retire explicitement le header
+// Authorization pour éviter qu'un token expiré déclenche un 401 de SimpleJWT.
+const _noAuth = { headers: { Authorization: undefined } };
+
+export const listServices = () => client.get("/services/", _noAuth);
+export const getService = (id) => client.get(`/services/${id}/`, _noAuth);
+export const listCommunes = () => client.get("/communes/", _noAuth);
+export const listCenters = (params) => client.get("/centers/", { ..._noAuth, params });
 
 // --- Demandes (citoyen) ---------------------------------------------------
 export const listRequests = () => client.get("/requests/");

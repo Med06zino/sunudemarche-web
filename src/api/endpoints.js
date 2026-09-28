@@ -69,6 +69,23 @@ export const getAgentRequest = (id) => client.get(`/agent/requests/${id}/`);
 export const changeRequestStatus = (id, payload) =>
   client.patch(`/agent/requests/${id}/status/`, payload);
 
+/**
+ * Génère automatiquement le PDF extrait de naissance, l'attache comme
+ * document officiel et passe la demande en DOCUMENT_DISPONIBLE.
+ * POST /api/agent/requests/{id}/generate-extract/
+ */
+export const generateExtract = (requestId) =>
+  client.post(`/agent/requests/${requestId}/generate-extract/`);
+
+/**
+ * Retourne un aperçu PDF (blob) sans sauvegarder en base.
+ * GET /api/agent/requests/{id}/preview-extract/
+ */
+export const previewExtract = (requestId) =>
+  client.get(`/agent/requests/${requestId}/preview-extract/`, {
+    responseType: "blob",
+  });
+
 // --- Admin ----------------------------------------------------------------
 export const getAdminStatistics = () => client.get("/admin/statistics/");
 export const listAdminUsers = () => client.get("/admin/users/");

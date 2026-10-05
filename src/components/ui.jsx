@@ -1,6 +1,6 @@
 import { FileX, AlertCircle, CheckCircle2, Info, AlertTriangle } from "lucide-react";
 
-// ─── Button ────────────────────────────────────────────────────────────────────
+//  Button 
 export function Button({ children, variant = "primary", size = "md", className = "", ...props }) {
   const base =
     "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 " +
@@ -41,7 +41,7 @@ export function Button({ children, variant = "primary", size = "md", className =
   );
 }
 
-// ─── Input ─────────────────────────────────────────────────────────────────────
+//  Input 
 export function Input({ label, error, hint, className = "", ...props }) {
   return (
     <div className="w-full space-y-1.5">
@@ -67,7 +67,7 @@ export function Input({ label, error, hint, className = "", ...props }) {
   );
 }
 
-// ─── Textarea ──────────────────────────────────────────────────────────────────
+// Textarea 
 export function Textarea({ label, error, hint, className = "", ...props }) {
   return (
     <div className="w-full space-y-1.5">
@@ -92,7 +92,7 @@ export function Textarea({ label, error, hint, className = "", ...props }) {
   );
 }
 
-// ─── Select ────────────────────────────────────────────────────────────────────
+// Select 
 export function Select({ label, error, children, className = "", ...props }) {
   return (
     <div className="w-full space-y-1.5">
@@ -118,7 +118,7 @@ export function Select({ label, error, children, className = "", ...props }) {
   );
 }
 
-// ─── Card ──────────────────────────────────────────────────────────────────────
+// Card 
 export function Card({ children, className = "", hover = false }) {
   return (
     <div
@@ -131,7 +131,7 @@ export function Card({ children, className = "", hover = false }) {
   );
 }
 
-// ─── Alert ─────────────────────────────────────────────────────────────────────
+// Alert 
 const ALERT_CONFIG = {
   info:    { cls: "bg-blue-50 text-blue-800 border-blue-200",    Icon: Info },
   success: { cls: "bg-emerald-50 text-emerald-800 border-emerald-200", Icon: CheckCircle2 },
@@ -149,7 +149,7 @@ export function Alert({ variant = "info", children, className = "" }) {
   );
 }
 
-// ─── Badge ─────────────────────────────────────────────────────────────────────
+// Badge 
 export function Badge({ children, variant = "default", className = "" }) {
   const variants = {
     default:  "bg-slate-100 text-slate-600 border-slate-200",
@@ -166,7 +166,7 @@ export function Badge({ children, variant = "default", className = "" }) {
   );
 }
 
-// ─── Spinner ───────────────────────────────────────────────────────────────────
+// Spinner 
 export function Spinner({ size = "md", className = "" }) {
   const sizes = { sm: "w-4 h-4 border-2", md: "w-7 h-7 border-2", lg: "w-10 h-10 border-[3px]" };
   return (
@@ -174,7 +174,7 @@ export function Spinner({ size = "md", className = "" }) {
   );
 }
 
-// ─── PageLoader ────────────────────────────────────────────────────────────────
+// PageLoader 
 export function PageLoader({ message = "Chargement..." }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400 animate-fade-in">
@@ -184,7 +184,7 @@ export function PageLoader({ message = "Chargement..." }) {
   );
 }
 
-// ─── EmptyState ────────────────────────────────────────────────────────────────
+// EmptyState 
 export function EmptyState({ title, description, icon: Icon = FileX, action }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center animate-fade-in">
@@ -198,7 +198,7 @@ export function EmptyState({ title, description, icon: Icon = FileX, action }) {
   );
 }
 
-// ─── SectionHeader ─────────────────────────────────────────────────────────────
+// SectionHeader 
 export function SectionHeader({ title, subtitle, action, border = true }) {
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${border ? "border-b border-slate-100 pb-6" : ""}`}>

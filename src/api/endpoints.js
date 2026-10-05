@@ -1,15 +1,19 @@
 import client from "./client";
 
-// --- Auth ---------------------------------------------------------------
+// Auth 
 export const register = (payload) => client.post("/auth/register/", payload);
-export const login = (payload) => client.post("/auth/login/", payload);
-export const logout = (refresh) => client.post("/auth/logout/", { refresh });
+export const login    = (payload) => client.post("/auth/login/",    payload);
+export const logout   = (refresh)  => client.post("/auth/logout/", { refresh });
 
-// --- Profil ---------------------------------------------------------------
+// Activation de compte par email
+export const activateAccount    = (token) => client.get(`/auth/activate/${token}/`);
+export const resendActivation   = (email) => client.post("/auth/resend-activation/", { email });
+
+//  Profil 
 export const getProfile = () => client.get("/profile/");
 export const updateProfile = (payload) => client.patch("/profile/", payload);
 
-// --- Services / Communes / Centres ----------------------------------------
+//  Services / Communes / Centres 
 // Ces routes sont publiques (AllowAny). On retire explicitement le header
 // Authorization pour éviter qu'un token expiré déclenche un 401 de SimpleJWT.
 const _noAuth = { headers: { Authorization: undefined } };
@@ -19,14 +23,14 @@ export const getService = (id) => client.get(`/services/${id}/`, _noAuth);
 export const listCommunes = () => client.get("/communes/", _noAuth);
 export const listCenters = (params) => client.get("/centers/", { ..._noAuth, params });
 
-// --- Demandes (citoyen) ---------------------------------------------------
+//  Demandes (citoyen) 
 export const listRequests = () => client.get("/requests/");
 export const getRequest = (id) => client.get(`/requests/${id}/`);
 export const createRequest = (payload) => client.post("/requests/", payload);
 export const updateRequest = (id, payload) => client.patch(`/requests/${id}/`, payload);
 export const submitRequest = (id) => client.post(`/requests/${id}/submit/`);
 
-// --- Documents ------------------------------------------------------------
+// Documents 
 export const uploadDocument = (requestId, formData) =>
   client.post(`/requests/${requestId}/documents/`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
@@ -57,7 +61,7 @@ export const getDocumentDownloadUrl = (id) =>
 export const downloadDocument = (id) =>
   client.get(`/documents/${id}/download/`, { responseType: "blob" });
 
-// --- Notifications --------------------------------------------------------
+//  Notifications 
 export const listNotifications = () => client.get("/notifications/");
 export const markNotificationRead = (id) => client.patch(`/notifications/${id}/read/`);
 
@@ -67,7 +71,7 @@ export const markNotificationRead = (id) => client.patch(`/notifications/${id}/r
  */
 export const listNotificationChannels = () => client.get("/notifications/channels/");
 
-// --- Agent ----------------------------------------------------------------
+//  Agent 
 export const listAgentRequests = (params) => client.get("/agent/requests/", { params });
 export const getAgentRequest = (id) => client.get(`/agent/requests/${id}/`);
 export const changeRequestStatus = (id, payload) =>
@@ -90,7 +94,7 @@ export const previewExtract = (requestId) =>
     responseType: "blob",
   });
 
-// --- Admin ----------------------------------------------------------------
+// Admin 
 export const getAdminStatistics = () => client.get("/admin/statistics/");
 export const listAdminUsers = () => client.get("/admin/users/");
 export const listAdminAgents = () => client.get("/admin/agents/");

@@ -11,8 +11,8 @@ const NAV = [
 ];
 
 const CONTACTS = [
-  { Icon: MapPin, text: "Dakar, Sénégal" },
-  { Icon: Mail, text: "support@sunudemarche.sn" },
+  { Icon: MapPin, text: "Dakar, Sénégal, Keur Massar" },
+  { Icon: Mail, text: "devtekk6@gmail.com" },
   { Icon: Phone, text: "+221 78 523 42 03" },
 ];
 

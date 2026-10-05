@@ -11,7 +11,7 @@ import * as api from "../../api/endpoints";
 import { Card, Button, Textarea, Alert, PageLoader, Badge } from "../../components/ui";
 import StatusBadge from "../../components/StatusBadge";
 
-// ── Constantes ─────────────────────────────────────────────────────────────
+// Constantes 
 
 const STATUS_LABELS = {
   BROUILLON: "Brouillon", SOUMISE: "Soumise", EN_VERIFICATION: "En vérification",
@@ -52,7 +52,7 @@ const CHANNEL_LABELS = {
 // Les statuts où l'on peut générer / uploader un document officiel
 const CAN_GENERATE_STATUSES = ["EN_TRAITEMENT", "VALIDEE", "DOCUMENT_DISPONIBLE"];
 
-// ── Composant modal prévisualisation ────────────────────────────────────────
+// Composant modal prévisualisation 
 
 function PreviewModal({ blobUrl, onClose, onConfirmGenerate, generating }) {
   return (
@@ -118,7 +118,7 @@ function PreviewModal({ blobUrl, onClose, onConfirmGenerate, generating }) {
   );
 }
 
-// ── Composant principal ─────────────────────────────────────────────────────
+//  Composant principal 
 
 export default function AgentRequestDetail() {
   const { id } = useParams();
@@ -149,7 +149,7 @@ export default function AgentRequestDetail() {
     setPreviewBlobUrl(null);
   }
 
-  // ── Actions de statut ────────────────────────────────────────────────
+  // Actions de statut 
   async function handleAction(action) {
     if ((action.needsComment || action.needsReason) && !pendingAction) {
       setPendingAction(action); setNote(""); return;
@@ -173,7 +173,7 @@ export default function AgentRequestDetail() {
     } finally { setSubmitting(false); }
   }
 
-  // ── Upload manuel document officiel ──────────────────────────────────
+  //  Upload manuel document officiel 
   async function handleOfficialDocUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -196,7 +196,7 @@ export default function AgentRequestDetail() {
     }
   }
 
-  // ── Prévisualisation PDF avant génération ────────────────────────────
+  // Prévisualisation PDF avant génération 
   async function handlePreview() {
     setPreviewing(true);
     try {
@@ -214,7 +214,7 @@ export default function AgentRequestDetail() {
     }
   }
 
-  // ── Génération définitive du PDF ─────────────────────────────────────
+  // Génération définitive du PDF 
   async function handleGenerate() {
     setGenerating(true);
     try {
@@ -349,7 +349,7 @@ export default function AgentRequestDetail() {
           </Card>
         </div>
 
-        {/* ── Section génération automatique extrait de naissance ── */}
+        {/* Section génération automatique extrait de naissance  */}
         {canGenerate && (
           <Card className="p-0 overflow-hidden border-primary/20">
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-primary/10 bg-primary/[0.02]">
@@ -491,7 +491,7 @@ export default function AgentRequestDetail() {
           </Card>
         )}
 
-        {/* ── Section upload manuel document officiel ── */}
+        {/*  Section upload manuel document officiel  */}
         {["VALIDEE", "DOCUMENT_DISPONIBLE"].includes(request.status) && (
           <Card className="p-0 overflow-hidden">
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
@@ -544,7 +544,7 @@ export default function AgentRequestDetail() {
           </Card>
         )}
 
-        {/* ── Infos demande ── */}
+        {/*  Infos demande  */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "Copies demandées", value: `${request.quantity ?? 1} copie${(request.quantity ?? 1) > 1 ? "s" : ""}`, Icon: Copy },
@@ -560,7 +560,7 @@ export default function AgentRequestDetail() {
           ))}
         </div>
 
-        {/* ── Panel d'actions de statut ── */}
+        {/* Panel d'actions de statut  */}
         {actions.length > 0 && (
           <Card className="p-0 overflow-hidden">
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">

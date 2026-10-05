@@ -19,6 +19,8 @@ import Faq from "./pages/public/Faq";
 import Contact from "./pages/public/Contact";
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
+import ActivateAccount from "./pages/public/ActivateAccount";
+import PendingActivation from "./pages/public/PendingActivation";
 
 // Pages Citoyen (Attention au nom du fichier Dashboard.jsx)
 import CitizenDashboard from "./pages/citizen/Dashboard";
@@ -100,6 +102,8 @@ export default function App() {
           </Route>
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />
+          <Route path="/activation-en-attente" element={<PendingActivation />} />
+          <Route path="/activer/:token" element={<ActivateAccount />} />
 
           {/* Espace Citoyen (rôle CITIZEN retourné par le backend) */}
           <Route element={<ProtectedRoute allowedRoles={["CITIZEN"]} />}>

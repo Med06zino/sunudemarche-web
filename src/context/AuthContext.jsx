@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser]     = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ── Hydratation du profil ──────────────────────────────────────────────
+  // Hydratation du profil 
   const fetchProfile = async () => {
     try {
       const { data } = await api.getProfile();
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
     fetchProfile();
   }, []);
 
-  // ── Connexion ─────────────────────────────────────────────────────────
+  // Connexion 
   async function signIn(email, password) {
     // loading=true pendant toute la durée → ProtectedRoute affiche le spinner,
     // jamais de user=null transitoire qui déclencherait une redirection.
@@ -61,14 +61,14 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // ── Inscription ────────────────────────────────────────────────────────
+  // Inscription 
   async function signUp(payload) {
     // L'inscription crée le compte (is_active=True désormais) puis connecte
     await api.register(payload);
     return signIn(payload.email, payload.password);
   }
 
-  // ── Déconnexion ────────────────────────────────────────────────────────
+  // Déconnexion 
   async function signOut() {
     const refresh = localStorage.getItem("refresh_token");
 

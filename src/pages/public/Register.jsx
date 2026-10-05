@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import * as api from "../../api/endpoints";
 import { Button } from "../../components/ui";
 import { User, Mail, Phone, Lock, Eye, EyeOff, Loader2, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -9,8 +10,9 @@ import logo from "../../assets/logo.png.png";
 const FIELD = (label, name, type, placeholder, icon) => ({ label, name, type, placeholder, icon });
 
 export default function Register() {
-  const { signUp } = useAuth();
   const navigate = useNavigate();
+
+  // On utilise api.register directement — pas de connexion auto après inscription
 
   const [form, setForm] = useState({
     first_name: "", last_name: "", email: "",
@@ -35,11 +37,12 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await signUp(form);
-      toast.success("Compte créé avec succès !");
-      // Navigation directe — signUp appelle signIn qui garantit
-      // loading=false + user≠null avant de retourner.
-      navigate("/citoyen", { replace: true });
+      await api.register(form);
+      toast.success("Compte créé ! Vérifiez votre boîte e-mail.");
+      navigate("/activation-en-attente", {
+        replace: true,
+        state: { email: form.email },
+      });
     } catch (err) {
       const errors = err.response?.data?.errors || err.response?.data;
       const first = errors && Object.values(errors)?.[0];

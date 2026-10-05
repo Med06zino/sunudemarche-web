@@ -9,7 +9,7 @@ const BASE_URL =
 
 const client = axios.create({ baseURL: BASE_URL });
 
-// ── Intercepteur requête : injecte le token Bearer ────────────────────────
+//  Intercepteur requête : injecte le token Bearer 
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   if (token) {
@@ -18,7 +18,7 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// ── Intercepteur réponse : refresh token automatique ─────────────────────
+// Intercepteur réponse : refresh token automatique 
 let isRefreshing = false;
 let queue = [];
 

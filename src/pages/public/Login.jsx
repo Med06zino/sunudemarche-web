@@ -31,10 +31,20 @@ export default function Login() {
       // donc ProtectedRoute ne verra jamais un état user=null transitoire.
       navigate(redirectTo, { replace: true });
     } catch (err) {
+      const status = err.response?.status;
       const msg =
         err.response?.data?.errors?.non_field_errors?.[0] ||
         err.response?.data?.detail ||
         "Email ou mot de passe incorrect.";
+
+      // 403 = compte non activé → rediriger vers la page de renvoi
+      if (status === 403) {
+        navigate("/activation-en-attente", {
+          state: { email: form.email },
+        });
+        return;
+      }
+
       toast.error(msg);
       setLoading(false);
     }

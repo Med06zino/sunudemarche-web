@@ -57,7 +57,6 @@ export default function CitizenDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            {/* <Sparkles size={16} className="text-amber-400" /> */}
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Bienvenue</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">

@@ -1,10 +1,11 @@
 import axios from "axios";
 
-// En dev  : VITE_API_URL=http://localhost:8000/api  (lu depuis .env)
-// En prod : VITE_API_URL=https://sunudemarche-api.onrender.com/api  (lu depuis .env.production)
-// Fallback hardcodé au cas où la variable n'est pas injectée par Vite
+// Priorité : variable Vite injectée au build > fallback Render (production)
+// .env       → http://localhost:8000/api   (dev local)
+// .env.production → https://sunudemarche-api.onrender.com/api  (build Vercel)
 const BASE_URL =
-  import.meta.env.VITE_API_URL || "https://sunudemarche-api.onrender.com/api";
+  import.meta.env.VITE_API_URL ||
+  "https://sunudemarche-api.onrender.com/api";
 
 const client = axios.create({ baseURL: BASE_URL });
 

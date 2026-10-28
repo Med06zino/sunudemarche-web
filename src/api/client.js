@@ -3,9 +3,10 @@ import axios from "axios";
 // Priorité : variable Vite injectée au build > fallback Render (production)
 // .env       → http://localhost:8000/api   (dev local)
 // .env.production → https://sunudemarche-api.onrender.com/api  (build Vercel)
-const BASE_URL =
+const BASE_URL = (
   import.meta.env.VITE_API_URL ||
-  "https://sunudemarche-api.onrender.com/api";
+  "https://sunudemarche-api.onrender.com/api"
+).replace(/\/+$/, "");
 
 const client = axios.create({ baseURL: BASE_URL });
 

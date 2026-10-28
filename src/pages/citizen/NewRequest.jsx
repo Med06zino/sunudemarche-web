@@ -31,6 +31,14 @@ const CHANNEL_CONFIG = {
   WHATSAPP:  { Icon: MessageCircle,  label: "WhatsApp",            needsContact: true,  placeholder: "+221 77 000 00 00" },
 };
 
+function flattenErrors(value) {
+  if (Array.isArray(value)) return value.flatMap(flattenErrors);
+  if (value && typeof value === "object") {
+    return Object.values(value).flatMap(flattenErrors);
+  }
+  return value == null ? [] : [String(value)];
+}
+
 export default function NewRequest() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -65,29 +73,57 @@ export default function NewRequest() {
   // Charger les centres filtrés par service
   useEffect(() => {
     if (!selectedService) return;
-    setLoadingCenters(true);
-    setSelectedCenter(null);
+    let isCurrentSelection = true;
     api.listCenters({ service: selectedService.code || selectedService.id })
       .then(({ data }) => {
         const r = data.results || data.data || data;
-        setCenters(Array.isArray(r) ? r : []);
+        if (isCurrentSelection) setCenters(Array.isArray(r) ? r : []);
       })
-      .catch(() => setCenters([]))
-      .finally(() => setLoadingCenters(false));
+      .catch(() => {
+        if (isCurrentSelection) setCenters([]);
+      })
+      .finally(() => {
+        if (isCurrentSelection) setLoadingCenters(false);
+      });
+
+    return () => {
+      isCurrentSelection = false;
+    };
   }, [selectedService]);
 
   const schemaFields = selectedService?.required_fields_schema?.fields || [];
   const channelCfg = CHANNEL_CONFIG[notifChannel] ?? CHANNEL_CONFIG.INTERNAL;
+  const missingRequiredFields = schemaFields.filter((field) => {
+    const value = formData[field.name];
+    return field.required && (value == null || !String(value).trim());
+  });
 
   // Validation de l'étape formulaire avant de passer au résumé
   function canProceedFromForm() {
     if (quantity < 1 || quantity > 20) return false;
     if (channelCfg.needsContact && !notifContact.trim()) return false;
-    return true;
+    return missingRequiredFields.length === 0;
+  }
+
+  function handleNextStep() {
+    setError("");
+    if (step === 2 && !canProceedFromForm()) {
+      const missingLabels = missingRequiredFields
+        .map((field) => FIELD_LABELS[field.name] || field.label)
+        .filter(Boolean);
+      setError(
+        missingLabels.length
+          ? `Renseignez les champs obligatoires : ${missingLabels.join(", ")}.`
+          : "Vérifiez la quantité et le contact de notification."
+      );
+      return;
+    }
+    setStep((currentStep) => currentStep + 1);
   }
 
   async function handleSubmit() {
     setError(""); setLoading(true);
+    let requestId;
     try {
       const payload = {
         service: selectedService.id,
@@ -100,15 +136,24 @@ export default function NewRequest() {
           : {}),
       };
       const { data: created } = await api.createRequest(payload);
-      const reqId = created.id || created.data?.id;
-      await api.submitRequest(reqId);
+      requestId = created.id || created.data?.id;
+      if (!requestId) {
+        throw new Error("La réponse de création ne contient pas l'identifiant du dossier.");
+      }
+      await api.submitRequest(requestId);
       toast.success("Demande soumise avec succès !");
-      navigate(`/citoyen/demandes/${reqId}`);
+      navigate(`/citoyen/demandes/${requestId}`);
     } catch (err) {
       const errs = err.response?.data?.errors;
-      const msg = (typeof errs === "object" && errs !== null)
-        ? Object.values(errs).flat().join(" ")
-        : err.response?.data?.detail || "Une erreur est survenue.";
+      const msg = flattenErrors(errs).join(" ")
+        || err.response?.data?.detail
+        || err.message
+        || "Une erreur est survenue.";
+      if (requestId) {
+        toast.error(`Le brouillon a été enregistré. ${msg}`);
+        navigate(`/citoyen/demandes/${requestId}`);
+        return;
+      }
       setError(msg);
     } finally {
       setLoading(false);
@@ -190,7 +235,14 @@ export default function NewRequest() {
                 {services.map((s) => (
                   <div
                     key={s.id}
-                    onClick={() => setSelectedService(s)}
+                    onClick={() => {
+                      if (selectedService?.id !== s.id) {
+                        setSelectedCenter(null);
+                        setCenters([]);
+                        setLoadingCenters(true);
+                      }
+                      setSelectedService(s);
+                    }}
                     className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-150
                       ${selectedService?.id === s.id
                         ? "border-primary bg-primary/5 shadow-sm"
@@ -490,10 +542,9 @@ export default function NewRequest() {
               size="sm"
               disabled={
                 (step === 0 && !selectedService) ||
-                (step === 1 && !selectedCenter) ||
-                (step === 2 && !canProceedFromForm())
+                (step === 1 && !selectedCenter)
               }
-              onClick={() => { setError(""); setStep((s) => s + 1); }}
+              onClick={handleNextStep}
             >
               Suivant <ArrowRight size={15} />
             </Button>

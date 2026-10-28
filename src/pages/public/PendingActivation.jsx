@@ -9,6 +9,7 @@ export default function PendingActivation() {
   const location = useLocation();
   // L'email est passé via navigate state depuis Register
   const email = location.state?.email || "";
+  const [emailSent, setEmailSent] = useState(location.state?.emailSent !== false);
 
   const [resent,   setResent]   = useState(false);
   const [loading,  setLoading]  = useState(false);
@@ -18,8 +19,12 @@ export default function PendingActivation() {
     if (!email) return;
     setLoading(true); setError(""); setResent(false);
     try {
-      await api.resendActivation(email);
-      setResent(true);
+      const { data } = await api.resendActivation(email);
+      setEmailSent(data.email_sent !== false);
+      setResent(data.email_sent !== false);
+      if (data.email_sent === false) {
+        setError("L'e-mail n'a pas pu être envoyé. Vérifiez la configuration du service e-mail puis réessayez.");
+      }
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -61,15 +66,19 @@ export default function PendingActivation() {
             </div>
             <h2 className="text-lg font-bold text-slate-900">Compte créé avec succès !</h2>
             <p className="text-slate-500 text-sm mt-2 leading-relaxed">
-              Un e-mail d'activation a été envoyé à
+              {emailSent
+                ? "Un e-mail d'activation a été envoyé à"
+                : "Votre compte est créé, mais l'e-mail d'activation n'a pas pu être envoyé à"}
               {email && (
                 <strong className="text-slate-700 block mt-1">{email}</strong>
               )}
             </p>
-            <p className="text-slate-400 text-xs mt-3">
-              Cliquez sur le lien dans l'e-mail pour activer votre compte.
-              Le lien expire dans <strong>24 heures</strong>.
-            </p>
+            {emailSent && (
+              <p className="text-slate-400 text-xs mt-3">
+                Cliquez sur le lien dans l'e-mail pour activer votre compte.
+                Le lien expire dans <strong>24 heures</strong>.
+              </p>
+            )}
           </div>
 
           {resent && (

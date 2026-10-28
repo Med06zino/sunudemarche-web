@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import * as api from "../../api/endpoints";
 import { Button } from "../../components/ui";
 import { User, Mail, Phone, Lock, Eye, EyeOff, Loader2, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
 import logo from "../../assets/logo.png.png";
-
-const FIELD = (label, name, type, placeholder, icon) => ({ label, name, type, placeholder, icon });
 
 export default function Register() {
   const navigate = useNavigate();
@@ -37,11 +34,15 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await api.register(form);
-      toast.success("Compte créé ! Vérifiez votre boîte e-mail.");
+      const { data } = await api.register(form);
+      if (data.email_sent) {
+        toast.success("Compte créé ! Vérifiez votre boîte e-mail.");
+      } else {
+        toast.error("Compte créé, mais l'e-mail n'a pas pu être envoyé.");
+      }
       navigate("/activation-en-attente", {
         replace: true,
-        state: { email: form.email },
+        state: { email: form.email, emailSent: data.email_sent },
       });
     } catch (err) {
       const errors = err.response?.data?.errors || err.response?.data;
